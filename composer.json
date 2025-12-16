@@ -1,0 +1,21 @@
+{
+    "name": "logan8920/io-comment-generator",
+    "description": "Parse field visit IO comments into structured data",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jayant Bhunia",
+            "email": "bhuniajayant@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "logan8920\\IOCommentParser\\": "src/"
+        }
+    },
+    "minimum-stability": "stable"
+}
