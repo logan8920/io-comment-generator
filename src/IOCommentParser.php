@@ -48,7 +48,7 @@ class IOCommentParser
 
     private static function isJson(string $string): bool
     {
-        if(is_numeric($string))
+        if (is_numeric($string))
             return false;
         json_decode($string);
         return json_last_error() === JSON_ERROR_NONE;
@@ -57,7 +57,7 @@ class IOCommentParser
     public static function makeIOComment(): self
     {
         $type = self::findLeadType();
-        print_r($type);
+        // print_r($type);
         match ($type) {
             'positive' => self::$comment = self::makeComment(PositiveCommentTemplate::get()),
             'negative' => self::$comment = self::makeComment(NegitiveCommentTemplate::get()),
@@ -84,7 +84,7 @@ class IOCommentParser
         return match (strtolower(trim($type))) {
             'success', '1', 'positive' => 'positive',
             'failure', '0', 'negative' => 'negative',
-            'referred' => 'referred',
+            'referred', 'refer to credit' => 'referred',
             default => 'negative',
         };
     }
@@ -96,13 +96,34 @@ class IOCommentParser
         $placeholders = $mapper->getPlaceholder();
         $values = $mapper->getFilterData();
 
-        $best = ['count' => -1, 'comment' => ''];
+        $best = [
+            'percentage' => 0,
+            'comment' => ''
+        ];
 
         foreach ($templates as $template) {
 
+            // extract placeholders from template
             $tplPlaceholders = self::extractPlaceholders($template);
+
+            // total placeholders in template
+            $total = count($tplPlaceholders);
+            if ($total === 0) {
+                continue;
+            }
+
+            // matched placeholders
             $matched = array_intersect($tplPlaceholders, array_keys($values));
 
+            // calculate percentage
+            $percentage = (count($matched) / $total) * 100;
+            // echo "$percentage\n";
+            // skip if less than 75%
+            if ($percentage < 50) {
+                continue;
+            }
+
+            // replace placeholders
             $comment = str_replace(
                 array_keys($placeholders),
                 array_values($values),
@@ -112,16 +133,18 @@ class IOCommentParser
             // remove unreplaced placeholders
             $comment = preg_replace('/\{[^}]+\}/', '', $comment);
 
-            if (count($matched) > $best['count']) {
+            // keep best percentage match
+            if ($percentage > $best['percentage']) {
                 $best = [
-                    'count' => count($matched),
-                    'comment' => trim($comment),
+                    'percentage' => $percentage,
+                    'comment' => trim($comment)
                 ];
             }
         }
 
         return $best['comment'];
     }
+
 
     private static function extractPlaceholders(string $template): array
     {
